@@ -64,6 +64,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -97,6 +98,8 @@ fun SettingsPreview() {
         navigateToDonate = {},
         importFile = {},
         exportFile = {},
+        importFileError = remember { mutableStateOf(null) },
+        clearImportFileError = {},
         snackbarHostState = remember { SnackbarHostState() },
         areDosageDotsHidden = false,
         saveDosageDotsAreHidden = {},
@@ -125,6 +128,8 @@ fun SettingsScreen(
         deleteEverything = viewModel::deleteEverything,
         importFile = viewModel::importFile,
         exportFile = viewModel::exportFile,
+        importFileError = viewModel.importFileError.collectAsState(),
+        clearImportFileError = viewModel::clearImportFileError,
         snackbarHostState = viewModel.snackbarHostState,
         areDosageDotsHidden = viewModel.areDosageDotsHiddenFlow.collectAsState().value,
         saveDosageDotsAreHidden = viewModel::saveDosageDotsAreHidden,
@@ -146,6 +151,8 @@ fun SettingsScreen(
     deleteEverything: () -> Unit,
     importFile: (uri: Uri) -> Unit,
     exportFile: (uri: Uri) -> Unit,
+    importFileError: State<String?>,
+    clearImportFileError: () -> Unit,
     snackbarHostState: SnackbarHostState,
     areDosageDotsHidden: Boolean,
     saveDosageDotsAreHidden: (Boolean) -> Unit,
@@ -353,6 +360,26 @@ fun SettingsScreen(
                                 Text("Cancel")
                             }
                         }
+                    )
+                }
+                AnimatedVisibility(visible = importFileError.value != null) {
+                    AlertDialog(
+                        onDismissRequest = {  clearImportFileError() },
+                        title = {
+                            Text(text = "Decoding file failed")
+                        },
+                        text = {
+                            Text(importFileError.value ?: "Unknown error")
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    clearImportFileError()
+                                }
+                            ) {
+                                Text("Ok")
+                            }
+                        },
                     )
                 }
                 HorizontalDivider()

@@ -26,11 +26,19 @@ import androidx.lifecycle.viewModelScope
 import pw.zotan.psylog.data.room.experiences.ExperienceRepository
 import pw.zotan.psylog.ui.tabs.settings.combinations.UserPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import javax.inject.Inject
 
 
@@ -71,6 +79,8 @@ class SettingsViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000)
     )
 
+    var importFileError: MutableStateFlow<String?> = MutableStateFlow(null);
+
     val snackbarHostState = SnackbarHostState()
 
     fun importFile(uri: Uri) {
@@ -83,9 +93,12 @@ class SettingsViewModel @Inject constructor(
                 )
             } else {
                 try {
+                    println("Decoding file...")
                     val json = Json { ignoreUnknownKeys = true }
 
-                    val journalExport = json.decodeFromString<JournalExport>(text)
+                    val convertedText = tryConvertFile(json, text)
+
+                    val journalExport = json.decodeFromString<JournalExport>(convertedText)
                     experienceRepository.deleteEverything()
                     experienceRepository.insertEverything(journalExport)
                     snackbarHostState.showSnackbar(
@@ -94,6 +107,7 @@ class SettingsViewModel @Inject constructor(
                     )
                 } catch (e: Exception) {
                     println("Error when decoding: ${e.message}")
+                    importFileError.value = e.message
                     snackbarHostState.showSnackbar(
                         message = "Decoding file failed",
                         duration = SnackbarDuration.Short
@@ -101,6 +115,99 @@ class SettingsViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun tryConvertFile(json: Json, text: String): String {
+        println(json)
+        val jsonElement = json.parseToJsonElement(text)
+        val data = (jsonElement as JsonObject).toMutableMap()
+        val exportSource = data["exportSource"]?.jsonPrimitive?.content ?: ""
+
+        if (exportSource == "Android Journal") { // v12+ Android Journal
+            println("Converting from v12+ Android Journal")
+            data.remove("exportSource")
+
+            val customUnits = data["customUnits"]?.jsonArray ?: JsonArray(emptyList())
+
+            val customSubstances = customUnits.map { unit ->
+                val unitObj = unit.jsonObject
+                val name = unitObj["name"]?.jsonPrimitive?.content ?: ""
+                val units = unitObj["unit"]?.jsonPrimitive?.content ?: ""
+                val description = unitObj["note"]?.jsonPrimitive?.content ?: ""
+
+                JsonObject(mapOf(
+                    "name" to JsonPrimitive(name),
+                    "units" to JsonPrimitive(units),
+                    "description" to JsonPrimitive(description)
+                ))
+            }
+            data["customSubstances"] = JsonArray(customSubstances)
+
+            // Create customUnitSubstances mapping
+            val customUnitSubstances = mutableMapOf<String, Pair<String?, String?>>()
+
+            // First pass: build initial mapping
+            customUnits.forEach { unit ->
+                val unitObj = unit.jsonObject
+                val id = unitObj["id"]?.jsonPrimitive?.content ?: ""
+                val name = unitObj["name"]?.jsonPrimitive?.content ?: ""
+                val doseComponents = unitObj["doseComponents"]?.jsonArray
+
+                if (!doseComponents.isNullOrEmpty()) {
+                    val firstComponent = doseComponents[0].jsonObject
+                    val substanceName = firstComponent["substanceName"]?.jsonPrimitive?.content
+                    val customUnitId = firstComponent["customUnitId"]?.jsonPrimitive?.content
+
+                    customUnitSubstances[id] = Pair(substanceName, customUnitId)
+                } else {
+                    customUnitSubstances[id] = Pair(name, null)
+                }
+            }
+
+            // Second pass: resolve nested customUnitId references
+            val resolvedMapping = mutableMapOf<String, String>()
+            customUnitSubstances.forEach { (key, value) ->
+                if (value.second != null && value.second in customUnitSubstances.keys) {
+                    val resolvedValue = customUnitSubstances[value.second] ?: value
+                    resolvedMapping[key] = resolvedValue.first ?: value.first ?: "Unknown substance"
+                    return@forEach
+                }
+                resolvedMapping[key] = value.first ?: "Unknown substance"
+            }
+
+            data.remove("customUnits")
+
+            val experiences = data["experiences"]?.jsonArray
+            if (experiences != null) {
+                val cleanedExperiences = experiences.map { experienceElement ->
+                    val experience = experienceElement.jsonObject.toMutableMap()
+                    val ingestions = experience["ingestions"]?.jsonArray
+                    if (ingestions != null) {
+                        val cleanedIngestions = ingestions.map { ingestionElement ->
+                            val ingestion = ingestionElement.jsonObject.toMutableMap()
+
+                            val substanceName = ingestion["substanceName"]
+                            val customUnitId = ingestion["customUnitId"]?.jsonPrimitive?.content
+
+                            if (substanceName == JsonNull && customUnitId != null) {
+                                resolvedMapping[customUnitId]?.let { resolvedName ->
+                                    ingestion["substanceName"] = JsonPrimitive(resolvedName)
+                                }
+                            }
+
+                            JsonObject(ingestion)
+                        }
+                        experience["ingestions"] = JsonArray(cleanedIngestions)
+                    }
+                    JsonObject(experience)
+                }
+                data["experiences"] = JsonArray(cleanedExperiences)
+            }
+
+            return json.encodeToString(JsonObject.serializer(), JsonObject(data))
+        }
+
+        return text
     }
 
     fun exportFile(uri: Uri) {
@@ -196,6 +303,10 @@ class SettingsViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun clearImportFileError() {
+        importFileError.value = null
     }
 
     fun deleteEverything() {
