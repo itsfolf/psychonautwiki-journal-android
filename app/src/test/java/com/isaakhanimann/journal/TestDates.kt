@@ -16,12 +16,12 @@
  * along with PsychonautWiki Journal.  If not, see https://www.gnu.org/licenses/gpl-3.0.en.html.
  */
 
-package com.isaakhanimann.journal
+package pw.zotan.psylog
 
-import com.isaakhanimann.journal.ui.tabs.journal.experience.timeline.drawables.AxisDrawable
-import com.isaakhanimann.journal.ui.utils.getInstant
-import com.isaakhanimann.journal.ui.utils.getStringOfPattern
-import com.isaakhanimann.journal.ui.utils.getTimeDifferenceText
+import pw.zotan.psylog.ui.tabs.journal.experience.timeline.drawables.AxisDrawable
+import pw.zotan.psylog.ui.utils.getInstant
+import pw.zotan.psylog.ui.utils.getStringOfPattern
+import pw.zotan.psylog.ui.utils.getTimeDifferenceText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test

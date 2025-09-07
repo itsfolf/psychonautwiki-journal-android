@@ -16,7 +16,7 @@
  * along with PsychonautWiki Journal.  If not, see https://www.gnu.org/licenses/gpl-3.0.en.html.
  */
 
-package com.isaakhanimann.journal
+package pw.zotan.psylog
 
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

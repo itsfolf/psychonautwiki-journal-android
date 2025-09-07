@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "com.isaakhanimann.journal"
+    namespace = "pw.zotan.psylog"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.isaakhanimann.journal"
+        applicationId = "pw.zotan.psylog"
         minSdk = 26
         targetSdk = 35
         versionCode = 62

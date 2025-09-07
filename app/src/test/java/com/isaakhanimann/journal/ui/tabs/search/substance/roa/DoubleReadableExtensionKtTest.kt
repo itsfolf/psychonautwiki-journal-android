@@ -1,4 +1,4 @@
-package com.isaakhanimann.journal.ui.tabs.search.substance.roa
+package pw.zotan.psylog.ui.tabs.search.substance.roa
 
 import junit.framework.TestCase.assertEquals
 import org.junit.Test
