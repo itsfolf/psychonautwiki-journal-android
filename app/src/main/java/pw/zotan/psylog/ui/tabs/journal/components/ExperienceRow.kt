@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import pw.zotan.psylog.data.room.experiences.entities.AdaptiveColor
 import pw.zotan.psylog.data.room.experiences.relations.ExperienceWithIngestionsCompanionsAndRatings
 import pw.zotan.psylog.data.room.experiences.relations.IngestionWithCompanionAndCustomUnit
 import pw.zotan.psylog.ui.theme.horizontalPadding
@@ -132,7 +133,7 @@ fun ColorRectangle(ingestions: List<IngestionWithCompanionAndCustomUnit>) {
     if (ingestions.size >= 2) {
         val brush = remember(ingestions) {
             val colors =
-                ingestions.map { it.substanceCompanion!!.color.getComposeColor(isDarkTheme) }
+                ingestions.map { (it.substanceCompanion?.color ?: AdaptiveColor.RED).getComposeColor(isDarkTheme) }
             Brush.verticalGradient(colors = colors)
         }
         Box(
@@ -149,7 +150,7 @@ fun ColorRectangle(ingestions: List<IngestionWithCompanionAndCustomUnit>) {
                 .fillMaxHeight()
                 .clip(RoundedCornerShape(cornerRadius))
                 .background(
-                    ingestions.first().substanceCompanion!!.color.getComposeColor(
+                    (ingestions.first().substanceCompanion?.color ?: AdaptiveColor.RED).getComposeColor(
                         isDarkTheme
                     )
                 ),
