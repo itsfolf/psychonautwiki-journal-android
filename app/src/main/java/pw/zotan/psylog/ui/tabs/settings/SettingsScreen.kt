@@ -418,12 +418,12 @@ fun SettingsScreen(
                     imageVector = Icons.AutoMirrored.Outlined.ContactSupport,
                     text = "Question, bug report"
                 ) {
-                    uriHandler.openUri("https://t.me/+ss8uZhBF6g00MTY8")
+                    uriHandler.openUri("mailto:psylog@zotan.email")
                 }
-                HorizontalDivider()
-                SettingsButton(imageVector = Icons.Outlined.VolunteerActivism, text = "Donate") {
-                    navigateToDonate()
-                }
+//                HorizontalDivider()
+//                SettingsButton(imageVector = Icons.Outlined.VolunteerActivism, text = "Donate") {
+//                    navigateToDonate()
+//                }
             }
             CardWithTitle(title = "App", innerPaddingHorizontal = 0.dp) {
                 SettingsButton(imageVector = Icons.Outlined.Code, text = "Source Code") {
@@ -453,7 +453,7 @@ fun SettingsScreen(
     }
 }
 
-const val SHARE_APP_URL = "https://psychonautwiki.org/wiki/PsychonautWiki_Journal"
+const val SHARE_APP_URL = "https://git.ztn.sh/PsyLog/PsyLog-android"
 
 
 @Composable
