@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
     <item
         android:width="100dp"
-        android:height="88dp"
+        android:height="100dp"
         android:drawable="@drawable/eye_open"
         android:gravity="center"
         tools:ignore="UnusedAttribute" />
