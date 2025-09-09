@@ -16,7 +16,7 @@ android {
         applicationId = "pw.zotan.psylog"
         minSdk = 26
         targetSdk = 35
-        versionCode = 62
+        versionCode = 2
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -24,6 +24,19 @@ android {
 
     room {
         schemaDirectory("$projectDir/schemas")
+    }
+
+    flavorDimensions += listOf("distribution")
+
+    productFlavors {
+        create("play") {
+            dimension = "distribution"
+        }
+
+        create("direct") {
+            dimension = "distribution"
+            applicationIdSuffix = ".direct"
+        }
     }
 
     buildTypes {
